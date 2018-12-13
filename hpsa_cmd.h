@@ -1,7 +1,7 @@
 /*
  *    Disk Array driver for HP Smart Array SAS controllers
- *    Copyright 2016-2017 Microsemi Corporation
- *    Copyright 2014-2016 PMC-Sierra, Inc.
+ *    Copyright 2016 Microsemi Corporation
+ *    Copyright 2014-2015 PMC-Sierra, Inc.
  *    Copyright 2000,2009-2015 Hewlett-Packard Development Company, L.P.
  *
  *    This program is free software; you can redistribute it and/or modify
@@ -12,10 +12,6 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, GOOD TITLE or
  *    NON INFRINGEMENT.  See the GNU General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *    Questions/Comments/Bugfixes to esc.storagedev@microsemi.com
  *
@@ -100,15 +96,13 @@
 /* cdb type */
 #define TYPE_CMD		0x00
 #define TYPE_MSG		0x01
-#define TYPE_IOACCEL2_CMD	0x81 /* 0x81 is not a value hardware uses */ 
+#define TYPE_IOACCEL2_CMD	0x81 /* 0x81 is not used by hardware */
 
 /* Message Types  */
 #define HPSA_TASK_MANAGEMENT    0x00
 #define HPSA_RESET              0x01
 #define HPSA_SCAN               0x02
 #define HPSA_NOOP               0x03
-#define HPSA_PHYS_TARGET_RESET 	0x99 /* not defined by cciss spec */
-
 
 #define HPSA_CTLR_RESET_TYPE    0x00
 #define HPSA_BUS_RESET_TYPE     0x01
@@ -146,9 +140,9 @@
 #define CFGTBL_ChangeReq        0x00000001l
 #define CFGTBL_AccCmds          0x00000001l
 #define DOORBELL_CTLR_RESET	0x00000004l
-#define DOORBELL_GENERATE_NMI	0x00000080l
 #define DOORBELL_CTLR_RESET2	0x00000020l
 #define DOORBELL_CLEAR_EVENTS	0x00000040l
+#define DOORBELL_GENERATE_CHKPT	0x00000080l
 
 #define CFGTBL_Trans_Simple     0x00000002l
 #define CFGTBL_Trans_Performant 0x00000004l
@@ -163,20 +157,19 @@
 #define CFGTBL_BusType_Fibre2G  0x00000200l
 
 /* VPD Inquiry types */
-#define HPSA_INQUIRY_FAILED		2
-#define HPSA_VPD_SUPPORTED_PAGES	0x00
-#define HPSA_VPD_LV_DEVICE_ID		0x83
-#define HPSA_VPD_PHYS_DEVICE_ID		0xC0
-#define HPSA_VPD_LV_DEVICE_GEOMETRY	0xC1
-#define HPSA_VPD_LV_IOACCEL_STATUS	0xC2
+#define HPSA_INQUIRY_FAILED		0x02
+#define HPSA_VPD_SUPPORTED_PAGES        0x00
+#define HPSA_VPD_LV_DEVICE_ID           0x83
+#define HPSA_VPD_LV_DEVICE_GEOMETRY     0xC1
+#define HPSA_VPD_LV_IOACCEL_STATUS      0xC2
 #define HPSA_VPD_LV_STATUS		0xC3
-#define HPSA_VPD_HEADER_SZ		4
+#define HPSA_VPD_HEADER_SZ              4
 
 /* Logical volume states */
 #define HPSA_VPD_LV_STATUS_UNSUPPORTED			0xff
-#define HPSA_LV_OK					0x0
-#define HPSA_LV_FAILED					0x1
-#define HPSA_LV_NOT_AVAILABLE				0xb
+#define HPSA_LV_OK                                      0x0
+#define HPSA_LV_FAILED					0x01
+#define HPSA_LV_NOT_AVAILABLE				0x0b
 #define HPSA_LV_UNDERGOING_ERASE			0x0F
 #define HPSA_LV_UNDERGOING_RPI				0x12
 #define HPSA_LV_PENDING_RPI				0x13
@@ -209,7 +202,6 @@ union u64bit {
 #pragma pack(1)
 
 #define HPSA_INQUIRY 0x12
-#define HPSA_RECEIVE_DIAGNOSTIC RECEIVE_DIAGNOSTIC
 struct InquiryData {
 	u8 data_byte[36];
 };
@@ -220,7 +212,7 @@ struct InquiryData {
 #define HPSA_CISS_READ	0xc0	/* CISS Read */
 #define HPSA_GET_RAID_MAP 0xc8	/* CISS Get RAID Layout Map */
 
-#define RAID_MAP_MAX_ENTRIES   1024
+#define RAID_MAP_MAX_ENTRIES   256
 
 struct raid_map_disk_data {
 	u32   ioaccel_handle;         /**< Handle to access this disk via the
@@ -237,7 +229,7 @@ struct raid_map_data {
 	u8    phys_blk_shift;		/* Shift factor to convert between
 					 * units of logical blocks and physical
 					 * disk blocks */
-	u8    parity_rotation_shift;	/*  Shift factor to convert between units
+	u8    parity_rotation_shift;	/* Shift factor to convert between units
 					 * of logical stripes and physical
 					 * stripes */
 	__le16   strip_size;		/* blocks used on each disk / stripe */
@@ -250,7 +242,7 @@ struct raid_map_data {
 	__le16   layout_map_count;	/* layout maps (1 map per mirror/parity
 					 * group) */
 	__le16   flags;			/* Bit 0 set if encryption enabled */
-#define RAID_MAP_FLAG_ENCRYPT_ON  0x01 	
+#define RAID_MAP_FLAG_ENCRYPT_ON  0x01
 	__le16   dekindex;		/* Data encryption key index. */
 	u8    reserved[16];
 	struct raid_map_disk_data data[RAID_MAP_MAX_ENTRIES];
@@ -305,8 +297,6 @@ struct SenseSubsystem_info {
 #define HPSA_DIAG_OPTS_DISABLE_RLD_CACHING 0x80000000
 #define BMIC_SENSE_SUBSYSTEM_INFORMATION 0x66
 #define BMIC_SENSE_STORAGE_BOX_PARAMS 0x65
-#define BMIC_SENSE_CONFIG 0x50
-#define BMIC_SET_CONFIG 0x51
 
 /* Command List Structure */
 union SCSI3Addr {
@@ -416,6 +406,7 @@ struct ErrorInfo {
 #define IOACCEL2_TMF	0x06
 
 #define DIRECT_LOOKUP_SHIFT 4
+#define DIRECT_LOOKUP_MASK (~((1 << DIRECT_LOOKUP_SHIFT) - 1))
 
 #define HPSA_ERROR_BIT          0x02
 struct ctlr_info; /* defined in hpsa.h */
@@ -441,12 +432,12 @@ struct CommandList {
 	struct ctlr_info	   *h;
 	int			   cmd_type;
 	long			   cmdindex;
-	struct request *rq;
 	struct completion *waiting;
 	struct scsi_cmnd *scsi_cmd;
 	struct work_struct work;
 
-	/* For commands using either of the two "ioaccel" paths to
+	/*
+	 * For commands using either of the two "ioaccel" paths to
 	 * bypass the RAID stack and go directly to the physical disk
 	 * phys_disk is a pointer to the hpsa_scsi_dev_t to which the
 	 * i/o is destined.  We need to store that here because the command
@@ -458,12 +449,12 @@ struct CommandList {
 
 	int abort_pending;
 	struct hpsa_scsi_dev_t *reset_pending;
-	atomic_t refcount;
-} __attribute__((aligned(COMMANDLIST_ALIGNMENT)));
+	atomic_t refcount; /* Must be last to avoid memset in hpsa_cmd_init() */
+} __aligned(COMMANDLIST_ALIGNMENT);
 
 /* Max S/G elements in I/O accelerator command */
 #define IOACCEL1_MAXSGENTRIES           24
-#define IOACCEL2_MAXSGENTRIES		28 
+#define IOACCEL2_MAXSGENTRIES		28
 
 /*
  * Structure for I/O accelerator (mode 1) commands.
@@ -578,9 +569,9 @@ struct io_accel2_cmd {
 	u8  direction;			/* direction, memtype, and encryption */
 #define IOACCEL2_DIRECTION_MASK		0x03 /* bits 0,1: direction  */
 #define IOACCEL2_DIRECTION_MEMTYPE_MASK	0x04 /* bit 2: memtype source/dest */
-					     /*     0b=PCIe, 1b=DDR */ 
+					     /*     0b=PCIe, 1b=DDR */
 #define IOACCEL2_DIRECTION_ENCRYPT_MASK	0x08 /* bit 3: encryption flag */
-					     /*     0=off, 1=on */					
+					     /*     0=off, 1=on */
 	u8  reply_queue;		/* Reply Queue ID */
 	u8  reserved1;			/* Reserved */
 	__le32 scsi_nexus;		/* Device Handle */
@@ -643,18 +634,18 @@ struct HostWrite {
 #define DRIVER_SUPPORT_UA_ENABLE        0x00000001
 
 struct CfgTable {
-	u8            Signature[4];
+	u8		Signature[4];
 	__le32		SpecValence;
 	__le32		TransportSupport;
 	__le32		TransportActive;
-	struct 		HostWrite HostWrite;
+	struct HostWrite HostWrite;
 	__le32		CmdsOutMax;
 	__le32		BusTypes;
 	__le32		TransMethodOffset;
-	u8            ServerName[16];
+	u8		ServerName[16];
 	__le32		HeartBeat;
 	__le32		driver_support;
-#define			ENABLE_SCSI_PREFETCH 0x100
+#define			ENABLE_SCSI_PREFETCH		0x100
 #define			ENABLE_UNIT_ATTN		0x01
 	__le32		MaxScatterGatherElements;
 	__le32		MaxLogicalUnits;
@@ -674,13 +665,13 @@ struct CfgTable {
 #define			MISC_FW_EVENT_NOTIFY		0x080
 	u8		driver_version[32];
 	__le32		max_cached_write_size;
-	u8              driver_scratchpad[16];
+	u8		driver_scratchpad[16];
 	__le32		max_error_info_length;
 	__le32		io_accel_max_embedded_sg_count;
 	__le32		io_accel_request_size_offset;
 	__le32		event_notify;
-#define HPSA_EVENT_NOTIFY_ACCEL_IO_PATH_STATE_CHANGE (1 << 30)
-#define HPSA_EVENT_NOTIFY_ACCEL_IO_PATH_CONFIG_CHANGE (1 << 31)
+#define		HPSA_EVENT_NOTIFY_ACCEL_IO_PATH_STATE_CHANGE (1 << 30)
+#define		HPSA_EVENT_NOTIFY_ACCEL_IO_PATH_CONFIG_CHANGE (1 << 31)
 	__le32		clear_event_notify;
 };
 
@@ -705,7 +696,7 @@ struct hpsa_pci_info {
 struct bmic_identify_controller {
 	u8	configured_logical_drive_count;	/* offset 0 */
 	u8	pad1[153];
-	u16	extended_logical_unit_count;	/* offset 154 */
+	__le16	extended_logical_unit_count;	/* offset 154 */
 	u8	pad2[136];
 	u8	controller_mode;	/* offset 292 */
 	u8	pad3[32];
@@ -713,17 +704,17 @@ struct bmic_identify_controller {
 
 
 struct bmic_identify_physical_device {
-	u8 scsi_bus;          /* SCSI Bus number on controller */
-	u8 scsi_id;           /* SCSI ID on this bus */
+	u8    scsi_bus;          /* SCSI Bus number on controller */
+	u8    scsi_id;           /* SCSI ID on this bus */
 	__le16 block_size;	     /* sector size in bytes */
 	__le32 total_blocks;	     /* number for sectors on drive */
 	__le32 reserved_blocks;   /* controller reserved (RIS) */
-	u8 model[40];         /* Physical Drive Model */
-	u8 serial_number[40]; /* Drive Serial Number */
-	u8 firmware_revision[8]; /* drive firmware revision */
-	u8 scsi_inquiry_bits; /* inquiry byte 7 bits */
-	u8 compaq_drive_stamp; /* 0 means drive not stamped */
-	u8 last_failure_reason;
+	u8    model[40];         /* Physical Drive Model */
+	u8    serial_number[40]; /* Drive Serial Number */
+	u8    firmware_revision[8]; /* drive firmware revision */
+	u8    scsi_inquiry_bits; /* inquiry byte 7 bits */
+	u8    compaq_drive_stamp; /* 0 means drive not stamped */
+	u8    last_failure_reason;
 #define BMIC_LAST_FAILURE_TOO_SMALL_IN_LOAD_CONFIG		0x01
 #define BMIC_LAST_FAILURE_ERROR_ERASING_RIS			0x02
 #define BMIC_LAST_FAILURE_ERROR_SAVING_RIS			0x03
@@ -778,68 +769,68 @@ struct bmic_identify_physical_device {
 #define BMIC_LAST_FAILURE_OFFLINE_DRIVE_TYPE_MIX		0x82
 #define BMIC_LAST_FAILURE_OFFLINE_ERASE_COMPLETE		0x83
 
-	u8  flags;
-	u8  more_flags;
-	u8  scsi_lun;		/* SCSI LUN for phys drive */
-	u8  yet_more_flags;
-	u8  even_more_flags;
-	__le32 spi_speed_rules;	/* SPI Speed data:Ultra disable diagnose */
-	u8  phys_connector[2];	/* connector number on controller */
-	u8  phys_box_on_bus;	/* phys enclosure this drive resides */
-	u8  phys_bay_in_box;	/* phys drv bay this drive resides */
-	__le32 rpm;		/* Drive rotational speed in rpm */
-	u8  device_type;	/* type of drive */
-#define BMIC_DEVICE_TYPE_SATA	0x1
+	u8     flags;
+	u8     more_flags;
+	u8     scsi_lun;          /* SCSI LUN for phys drive */
+	u8     yet_more_flags;
+	u8     even_more_flags;
+	__le32 spi_speed_rules;/* SPI Speed data:Ultra disable diagnose */
+	u8     phys_connector[2];         /* connector number on controller */
+	u8     phys_box_on_bus;  /* phys enclosure this drive resides */
+	u8     phys_bay_in_box;  /* phys drv bay this drive resides */
+	__le32 rpm;              /* Drive rotational speed in rpm */
+	u8     device_type;       /* type of drive */
+#define BMIC_DEVICE_TYPE_CONTROLLER	0x07
 
-	u8  sata_version;	/* only valid when device_type = BMIC_DEVICE_TYPE_SATA */
+	u8     sata_version;     /* only valid when drive_type is SATA */
 	__le64 big_total_block_count;
 	__le64 ris_starting_lba;
 	__le32 ris_size;
-	u8  wwid[20];
-	u8  controller_phy_map[32];
+	u8     wwid[20];
+	u8     controller_phy_map[32];
 	__le16 phy_count;
-	u8  phy_connected_dev_type[256];
-	u8  phy_to_drive_bay_num[256];
+	u8     phy_connected_dev_type[256];
+	u8     phy_to_drive_bay_num[256];
 	__le16 phy_to_attached_dev_index[256];
-	u8  box_index;
-	u8  reserved;
+	u8     box_index;
+	u8     reserved;
 	__le16 extra_physical_drive_flags;
 #define BMIC_PHYS_DRIVE_SUPPORTS_GAS_GAUGE(idphydrv) \
 	(idphydrv->extra_physical_drive_flags & (1 << 10))
-	u8  negotiated_link_rate[256];
-	u8  phy_to_phy_map[256];
-	u8  redundant_path_present_map;
-	u8  redundant_path_failure_map;
-	u8  active_path_number;
+	u8     negotiated_link_rate[256];
+	u8     phy_to_phy_map[256];
+	u8     redundant_path_present_map;
+	u8     redundant_path_failure_map;
+	u8     active_path_number;
 	__le16 alternate_paths_phys_connector[8];
-	u8  alternate_paths_phys_box_on_port[8];
-	u8  multi_lun_device_lun_count;
-	u8  minimum_good_fw_revision[8];
-	u8  unique_inquiry_bytes[20];
-	u8  current_temperature_degreesC;
-	u8  temperature_threshold_degreesC;
-	u8  max_temperature_degreesC;
-	u8  logical_blocks_per_phys_block_exp; /* phyblocksize = 512*2^exp */
+	u8     alternate_paths_phys_box_on_port[8];
+	u8     multi_lun_device_lun_count;
+	u8     minimum_good_fw_revision[8];
+	u8     unique_inquiry_bytes[20];
+	u8     current_temperature_degreesC;
+	u8     temperature_threshold_degreesC;
+	u8     max_temperature_degreesC;
+	u8     logical_blocks_per_phys_block_exp; /* phyblocksize = 512*2^exp */
 	__le16 current_queue_depth_limit;
-	u8  reserved_switch_stuff[60];
+	u8     reserved_switch_stuff[60];
 	__le16 power_on_hours; /* valid only if gas gauge supported */
 	__le16 percent_endurance_used; /* valid only if gas gauge supported. */
 #define BMIC_PHYS_DRIVE_SSD_WEAROUT(idphydrv) \
 	((idphydrv->percent_endurance_used & 0x80) || \
 	 (idphydrv->percent_endurance_used > 10000))
-	u8  drive_authentication;
+	u8     drive_authentication;
 #define BMIC_PHYS_DRIVE_AUTHENTICATED(idphydrv) \
 	(idphydrv->drive_authentication == 0x80)
-	u8  smart_carrier_authentication;
+	u8     smart_carrier_authentication;
 #define BMIC_SMART_CARRIER_AUTHENTICATION_SUPPORTED(idphydrv) \
 	(idphydrv->smart_carrier_authentication != 0x0)
 #define BMIC_SMART_CARRIER_AUTHENTICATED(idphydrv) \
 	(idphydrv->smart_carrier_authentication == 0x01)
-	u8  smart_carrier_app_fw_version;
-	u8  smart_carrier_bootloader_fw_version;
-	u8  sanitize_support_flags;
-	u8  drive_key_flags;
-	u8  encryption_key_name[64];
+	u8     smart_carrier_app_fw_version;
+	u8     smart_carrier_bootloader_fw_version;
+	u8     sanitize_support_flags;
+	u8     drive_key_flags;
+	u8     encryption_key_name[64];
 	__le32 misc_drive_flags;
 	__le16 dek_index;
 	__le16 hba_drive_encryption_flags;
