@@ -1537,10 +1537,10 @@ static int hpsa_scsi_find_entry(struct hpsa_scsi_dev_t *needle,
 		if (SCSI3ADDR_EQ(needle->scsi3addr, haystack[i]->scsi3addr)) {
 			*index = i;
 			if (device_is_the_same(needle, haystack[i])) {
-				if (device_updated(needle, haystack[i]))
-					return DEVICE_UPDATED;
 				if (device_expose_changed(needle, haystack[i]))
 					return DEVICE_CHANGED;
+				if (device_updated(needle, haystack[i]))
+					return DEVICE_UPDATED;
 				return DEVICE_SAME;
 			} else {
 				/* Keep offline devices offline */
